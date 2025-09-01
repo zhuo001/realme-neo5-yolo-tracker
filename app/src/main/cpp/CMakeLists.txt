@@ -55,8 +55,20 @@ target_link_libraries(yolo_tracker
     ${log-lib}
 )
 
-# 如果有 ncnn，链接它
+# 如果有 ncnn，链接它和 OpenMP
 if(TARGET ncnn)
     target_link_libraries(yolo_tracker ncnn)
     target_compile_definitions(yolo_tracker PRIVATE USE_NCNN=1)
+    
+    # 添加 OpenMP 支持 - NCNN 需要 OpenMP
+    find_package(OpenMP)
+    if(OpenMP_CXX_FOUND)
+        target_link_libraries(yolo_tracker OpenMP::OpenMP_CXX)
+        message(STATUS "OpenMP found and linked")
+    else()
+        # 手动链接 OpenMP - Android NDK 通常使用这个方法
+        target_link_libraries(yolo_tracker -fopenmp)
+        target_compile_options(yolo_tracker PRIVATE -fopenmp)
+        message(STATUS "OpenMP manually linked with -fopenmp")
+    endif()
 endif()
