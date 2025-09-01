@@ -18,18 +18,22 @@ else()
     message(WARNING "NCNN not found at ${NCNN_DIR}, building stub version")
 endif()
 
-# 包含我们的 native 源码
-add_subdirectory(../../../../native ${CMAKE_BINARY_DIR}/native_build)
-
 # 主库
 add_library(yolo_tracker SHARED
-    tracker_jni.cpp
+    ../../../../native/src/jni_interface.cpp
+    ../../../../native/src/detector.cpp
+    ../../../../native/src/bytetrack.cpp
+    ../../../../native/src/usb_protocol.cpp
+    ../../../../native/src/nms.cpp
+)
+
+target_include_directories(yolo_tracker PRIVATE
+    ../../../../native/include
 )
 
 target_link_libraries(yolo_tracker
     android
     ${log-lib}
-    yolo_tracker_native
 )
 
 # 如果有 ncnn，链接它
