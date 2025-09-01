@@ -1,0 +1,54 @@
+# 创建目录
+mkdir -Force .github\workflows | Out-Null
+
+# 写入文件
+@'
+name: build-apk
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - uses: actions/setup-java@v4
+      with:
+        java-version: '17'
+        distribution: 'temurin'
+    - uses: android-actions/setup-android@v3
+    - name: Cache Gradle
+      uses: actions/cache@v3
+      with:
+        path: |
+          ~/.gradle/caches
+          ~/.gradle/wrapper
+        key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*','**/gradle-wrapper.properties') }}
+        restore-keys: |
+          ${{ runner.os }}-gradle-
+    - name: chmod gradlew
+      run: chmod +x gradlew
+    - name: local.properties
+      run: echo "sdk.dir=$ANDROID_HOME" > local.properties
+    - name: Assemble Debug
+      run: ./gradlew assembleDebug --stacktrace
+    - name: Assemble Release
+      run: ./gradlew assembleRelease --stacktrace
+    - name: Upload Debug APK
+      uses: actions/upload-artifact@v4
+      with:
+        name: realme-neo5-yolo-debug
+        path: app/build/outputs/apk/debug/*.apk
+    - name: Upload Release APK
+      uses: actions/upload-artifact@v4
+      with:
+        name: realme-neo5-yolo-release
+        path: app/build/outputs/apk/release/*.apk
+'@ | Set-Content -Encoding UTF8 .github/workflows/build-apk.yml
+
+git add .github/workflows/build-apk.yml
+git commit -m "Add build-apk workflow"
+git push origin main
