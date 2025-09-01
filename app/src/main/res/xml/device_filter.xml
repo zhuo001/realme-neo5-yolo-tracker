@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- STM32 常见的 USB CDC 设备过滤器 -->
+    <usb-device vendor-id="1155" product-id="22336" />
+    <!-- STM32 Virtual COM Port -->
+    <usb-device vendor-id="1155" product-id="22314" />
+    <!-- FTDI 芯片 -->
+    <usb-device vendor-id="1027" />
+    <!-- CH340/CH341 芯片 -->
+    <usb-device vendor-id="6790" />
+    <!-- CP2102 芯片 -->
+    <usb-device vendor-id="4292" />
+    <!-- 通用 CDC 设备 -->
+    <usb-device class="2" />
+</resources>

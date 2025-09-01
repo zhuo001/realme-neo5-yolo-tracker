@@ -1,0 +1,140 @@
+{
+  // VS Code Android 工作流任务集合
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "gradle: clean",
+      "type": "shell",
+      "command": "gradlew.bat",
+      "args": ["clean"],
+      "group": "build",
+      "problemMatcher": []
+    },
+    {
+      "label": "gradle: assembleDebug",
+      "type": "shell",
+      "command": "gradlew.bat",
+      "args": ["assembleDebug", "-x", "lint"],
+      "group": "build",
+      "problemMatcher": []
+    },
+    {
+      "label": "gradle: assembleRelease",
+      "type": "shell",
+      "command": "gradlew.bat",
+      "args": ["assembleRelease"],
+      "group": "build",
+      "problemMatcher": []
+    },
+    {
+      "label": "apk: installDebug",
+      "type": "shell",
+      "dependsOn": ["gradle: assembleDebug"],
+      "command": "powershell",
+      "args": ["-NoProfile", "-ExecutionPolicy", "Bypass", "adb install -r \"app/build/outputs/apk/debug/app-debug.apk\""] ,
+      "problemMatcher": []
+    },
+    {
+      "label": "run: start Activity",
+      "type": "shell",
+      "command": "adb",
+      "args": ["shell", "am", "start", "-n", "com.example.tracker/.MainActivity"],
+      "dependsOn": ["apk: installDebug"],
+      "problemMatcher": []
+    },
+    {
+      "label": "adb: pidof tracker",
+      "type": "shell",
+      "command": "adb",
+      "args": ["shell", "pidof", "com.example.tracker"],
+      "problemMatcher": []
+    },
+    {
+      "label": "adb: logcat (filtered)",
+      "type": "shell",
+      "command": "powershell",
+      "args": ["-NoProfile", "-ExecutionPolicy", "Bypass", "adb logcat | Select-String -Pattern 'YoloTracker|yolo_tracker'"],
+      "problemMatcher": []
+    },
+    {
+      "label": "tests: unit",
+      "type": "shell",
+      "command": "gradlew.bat",
+      "args": ["testDebugUnitTest"],
+      "group": "test",
+      "problemMatcher": []
+    },
+    {
+      "label": "lint: debug",
+      "type": "shell",
+      "command": "gradlew.bat",
+      "args": ["lintDebug"],
+      "group": "test",
+      "problemMatcher": []
+    },
+    {
+      "label": "native: build only",
+      "type": "shell",
+      "command": "gradlew.bat",
+      "args": [":app:externalNativeBuildDebug"],
+      "group": "build",
+      "problemMatcher": []
+    },
+    {
+      "label": "perf: gfxinfo",
+      "type": "shell",
+      "command": "adb",
+      "args": ["shell", "dumpsys", "gfxinfo", "com.example.tracker"],
+      "problemMatcher": []
+    },
+    {
+      "label": "k30s: device info",
+      "type": "shell",
+      "command": "powershell",
+      "args": ["-NoProfile", "-ExecutionPolicy", "Bypass", "adb shell getprop | Select-String -Pattern '(ro.product.model|ro.build.version|ro.chipname)'"],
+      "problemMatcher": []
+    },
+    {
+      "label": "k30s: thermal status",
+      "type": "shell",
+      "command": "powershell",
+      "args": ["-NoProfile", "-ExecutionPolicy", "Bypass", "adb shell 'for f in /sys/class/thermal/thermal_zone*/temp; do echo \"$f: $(cat $f)\"; done'"],
+      "problemMatcher": []
+    },
+    {
+      "label": "k30s: performance monitor",
+      "type": "shell",
+      "command": "powershell",
+      "args": ["-NoProfile", "-ExecutionPolicy", "Bypass", "adb logcat -c; adb logcat | Select-String -Pattern '(FPS:|inference time:|CPU:|GPU:|Temp:)'"],
+      "problemMatcher": []
+    },
+    {
+      "label": "k30s: usb devices",
+      "type": "shell",
+      "command": "adb",
+      "args": ["shell", "lsusb"],
+      "problemMatcher": []
+    },
+    {
+      "label": "k30s: grant permissions",
+      "type": "shell",
+      "command": "powershell",
+      "args": ["-NoProfile", "-ExecutionPolicy", "Bypass", "adb shell pm grant com.example.tracker android.permission.CAMERA; echo 'Camera permission granted'"],
+      "problemMatcher": []
+    },
+    {
+      "label": "debug: prepare gdbserver",
+      "type": "shell",
+      "command": "powershell",
+      "args": ["-NoProfile", "-ExecutionPolicy", "Bypass", "adb push \"$env:ANDROID_NDK_HOME\\prebuilt\\android-arm64\\gdbserver\" /data/local/tmp/gdbserver; adb shell chmod +x /data/local/tmp/gdbserver; echo 'gdbserver ready'"],
+      "problemMatcher": []
+    },
+    {
+      "label": "debug: get app pid",
+      "type": "shell",
+      "command": "powershell",
+      "args": ["-NoProfile", "-ExecutionPolicy", "Bypass", "$PID = adb shell pidof com.example.tracker; if($PID) { echo \"App PID: $PID\" } else { echo 'App not running' }"],
+      "problemMatcher": []
+    }
+  ]
+}

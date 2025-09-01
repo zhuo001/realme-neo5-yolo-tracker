@@ -1,0 +1,49 @@
+{
+  // VS Code 调试配置（精简）
+  // 说明：
+  // 1. Java/Kotlin 代码调试在普通非 root 设备上需要 JDWP 端口，Android 默认已开放；
+  //    但 VS Code 需要 Java 扩展（Extension Pack for Java）并当前不直接识别 Android 进程，
+  //    建议：使用命令行 adb shell am set-debug-app -w com.example.tracker 后在 Android Studio 或 jdb 附加。
+  // 2. 这里保留 Native C++ gdb attach 示例：需提前把 gdbserver 推送到设备：
+  //    adb push %ANDROID_NDK_HOME%/prebuilt/android-arm64/gdbserver /data/local/tmp/gdbserver
+  //    adb shell chmod +x /data/local/tmp/gdbserver
+  //    adb shell /data/local/tmp/gdbserver :5039 --attach <PID>
+  //    然后在 VS Code 启动本配置（注意修改 pipeTransport 参数如果端口不同）。
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Attach Native (gdb) arm64",
+      "type": "cppdbg",
+      "request": "launch",
+      "program": "${workspaceFolder}/dummy", // 不实际运行，仅需进入调试会话
+      "MIMode": "gdb",
+      "miDebuggerPath": "${env:ANDROID_NDK_HOME}/toolchains/llvm/prebuilt/windows-x86_64/bin/aarch64-linux-android-gdb.exe",
+      "cwd": "${workspaceFolder}",
+      "pipeTransport": {
+        "pipeProgram": "adb",
+        "pipeArgs": [
+          "shell",
+          "/data/local/tmp/gdbserver",
+          ":5039",
+          "--attach",
+          "${input:androidPid}"
+        ],
+        "debuggerPath": "/data/local/tmp/gdbserver"
+      },
+      "setupCommands": [
+        { "description": "Enable pretty printing", "text": "-enable-pretty-printing", "ignoreFailures": true }
+      ],
+      "sourceFileMap": {
+        "/": "${workspaceFolder}"
+      }
+    }
+  ],
+  "inputs": [
+    {
+      "id": "androidPid",
+      "type": "promptString",
+      "description": "输入要附加的 com.example.tracker 进程 PID (adb shell pidof com.example.tracker)",
+      "default": "" 
+    }
+  ]
+}

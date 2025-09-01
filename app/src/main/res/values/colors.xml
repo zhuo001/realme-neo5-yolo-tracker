@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="black">#FF000000</color>
+    <color name="white">#FFFFFFFF</color>
+    <color name="primary">#FF03DAC5</color>
+    <color name="primary_dark">#FF018786</color>
+    <color name="accent">#FF03DAC5</color>
+    
+    <!-- 追踪框颜色 -->
+    <color name="bbox_color_1">#FF00E5FF</color>
+    <color name="bbox_color_2">#FFFF00E5</color>
+    <color name="bbox_color_3">#FFE5FF00</color>
+    <color name="bbox_color_4">#FF00FF00</color>
+    <color name="bbox_color_5">#FFFF0000</color>
+    
+    <!-- 状态标签颜色 -->
+    <color name="status_tracking">#A04CAF50</color>
+    <color name="status_searching">#A0FF9800</color>
+    <color name="status_standby">#A0607D8B</color>
+</resources>
