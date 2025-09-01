@@ -12,8 +12,27 @@ if(EXISTS ${NCNN_DIR})
     add_library(ncnn STATIC IMPORTED)
     set_target_properties(ncnn PROPERTIES IMPORTED_LOCATION
         ${NCNN_DIR}/lib/android/${ANDROID_ABI}/libncnn.a)
-    target_include_directories(ncnn INTERFACE ${NCNN_DIR}/include)
+    
+    # 设置 NCNN 头文件路径 - 支持多种可能的目录结构
+    if(EXISTS ${NCNN_DIR}/include/ncnn)
+        target_include_directories(ncnn INTERFACE ${NCNN_DIR}/include)
+        message(STATUS "Using NCNN headers from: ${NCNN_DIR}/include")
+    elseif(EXISTS ${NCNN_DIR}/include/net.h)
+        target_include_directories(ncnn INTERFACE ${NCNN_DIR}/include)
+        message(STATUS "Using NCNN headers from: ${NCNN_DIR}/include")
+    else()
+        message(WARNING "NCNN headers not found in expected locations!")
+        # 尝试查找可能的头文件位置
+        file(GLOB_RECURSE NCNN_HEADERS "${NCNN_DIR}/**/net.h")
+        if(NCNN_HEADERS)
+            get_filename_component(NCNN_INCLUDE_DIR "${NCNN_HEADERS}" DIRECTORY)
+            target_include_directories(ncnn INTERFACE ${NCNN_INCLUDE_DIR})
+            message(STATUS "Found NCNN headers at: ${NCNN_INCLUDE_DIR}")
+        endif()
+    endif()
+    
     message(STATUS "Using NCNN from: ${NCNN_DIR}")
+    message(STATUS "NCNN library: ${NCNN_DIR}/lib/android/${ANDROID_ABI}/libncnn.a")
 else()
     message(WARNING "NCNN not found at ${NCNN_DIR}, building stub version")
 endif()
