@@ -21,6 +21,7 @@ import kotlinx.coroutines.withContext
 import java.nio.ByteBuffer
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
+import com.example.tracker.databinding.ActivityMainBinding
 
 class MainActivity : AppCompatActivity() {
     private lateinit var binding: ActivityMainBinding
@@ -422,14 +423,15 @@ class MainActivity : AppCompatActivity() {
     /**
      * 应用设备特定的优化配置
      */
-    private fun applyDeviceOptimizations(config: DeviceOptimizations) {
-        Log.i(TAG, "应用设备优化: ${config.deviceName}")
+    private fun applyDeviceOptimizations(config: DeviceOptimization) {
+        Log.i(TAG, "应用设备优化配置")
         
         // 设置性能参数
-        Log.d(TAG, "最大帧率: ${config.maxFrameRate}fps")
-        Log.d(TAG, "目标分辨率: ${config.targetResolution.width}x${config.targetResolution.height}")
+        Log.d(TAG, "目标帧率: ${config.targetFps}fps")
+        Log.d(TAG, "目标分辨率: ${config.preferredResolution.first}x${config.preferredResolution.second}")
         Log.d(TAG, "GPU加速: ${config.useGpuAcceleration}")
-        Log.d(TAG, "并行处理线程: ${config.parallelProcessingThreads}")
+        Log.d(TAG, "CPU核心数: ${config.cpuCores}")
+        Log.d(TAG, "显示刷新率: ${config.displayRefreshRate}Hz")
         
         // 应用优化设置
         if (config.useGpuAcceleration) {
@@ -438,21 +440,21 @@ class MainActivity : AppCompatActivity() {
         }
         
         // 设置处理线程数
-        if (config.parallelProcessingThreads > 1) {
-            setupParallelProcessing(config.parallelProcessingThreads)
+        if (config.cpuCores > 1) {
+            setupParallelProcessing(config.cpuCores)
         }
         
         // 应用性能模式设置
-        when (config.deviceName) {
-            "Realme Neo 5 150W" -> {
-                Log.i(TAG, "启用Realme Neo 5 150W高性能模式")
-                // 设置高刷新率、GPU加速等
-                applyRealmeNeo5Optimizations(config)
-            }
-            else -> {
-                Log.i(TAG, "应用通用设备优化")
-            }
+        if (isRealmeNeo5()) {
+            Log.i(TAG, "启用Realme Neo 5 150W高性能模式")
+            applyRealmeNeo5Optimizations(config)
+        } else {
+            Log.i(TAG, "应用通用设备优化")
         }
+    }
+    
+    private fun isRealmeNeo5(): Boolean {
+        return DeviceDetector.isRealmeNeo5()
     }
     
     private fun enableGpuAcceleration() {
@@ -465,13 +467,13 @@ class MainActivity : AppCompatActivity() {
         Log.d(TAG, "设置$threads个并行处理线程")
     }
     
-    private fun applyRealmeNeo5Optimizations(config: DeviceOptimizations) {
+    private fun applyRealmeNeo5Optimizations(config: DeviceOptimization) {
         // Realme Neo 5 150W特定优化
         Log.d(TAG, "应用Realme Neo 5 150W优化:")
         Log.d(TAG, "- Snapdragon 8+ Gen 1 GPU加速")
-        Log.d(TAG, "- 120Hz高刷新率模式")
-        Log.d(TAG, "- 8核CPU并行处理")
-        Log.d(TAG, "- 散热优化阈值: ${config.thermalThreshold}°C")
+        Log.d(TAG, "- ${config.displayRefreshRate}Hz高刷新率模式")
+        Log.d(TAG, "- ${config.cpuCores}核CPU并行处理")
+        Log.d(TAG, "- 电源优化: ${!config.powerOptimization}")
         
         // 这里可以添加更多Realme特定的优化
         // 例如：设置高性能模式、调整散热策略等
