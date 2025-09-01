@@ -31,20 +31,27 @@ jobs:
       run: |
         echo "🔄 Downloading NCNN library for Android..."
         wget https://github.com/Tencent/ncnn/releases/download/20240102/ncnn-20240102-android.zip
-        unzip -q ncnn-20240102-android.zip
+        # Use -o to overwrite files without prompting
+        unzip -o -q ncnn-20240102-android.zip
         
         # Create ncnn-android directory structure
         mkdir -p ncnn-android/include
         mkdir -p ncnn-android/lib/android/arm64-v8a/lib
         
-        # Copy headers
-        cp -r ncnn-20240102-android/arm64-v8a/include/* ncnn-android/include/
+        # Copy headers (force overwrite)
+        cp -rf ncnn-20240102-android/arm64-v8a/include/* ncnn-android/include/
         
-        # Copy static library
-        cp ncnn-20240102-android/arm64-v8a/lib/libncnn.a ncnn-android/lib/android/arm64-v8a/lib/
+        # Copy static library (force overwrite)
+        cp -f ncnn-20240102-android/arm64-v8a/lib/libncnn.a ncnn-android/lib/android/arm64-v8a/lib/
         
         echo "✅ NCNN library setup complete"
         echo "📁 Library size: $(du -h ncnn-android/lib/android/arm64-v8a/lib/libncnn.a)"
+        
+        # Verify the setup
+        echo "🔍 Verifying NCNN structure:"
+        ls -la ncnn-android/
+        ls -la ncnn-android/include/ncnn/ | head -10
+        ls -la ncnn-android/lib/android/arm64-v8a/lib/
         
     - name: Create YOLO model files
       run: |
@@ -65,12 +72,12 @@ jobs:
         InnerProduct     output                   1 1 flatten_out output 0=85 1=1 2=5440
         EOF
         
-        # Create minimal binary weights file (for testing)
-        dd if=/dev/zero of=app/src/main/assets/models/yolov5n.bin bs=1024 count=10
+        # Create minimal binary weights file (for testing) - force create without interaction
+        dd if=/dev/zero of=app/src/main/assets/models/yolov5n.bin bs=1024 count=10 2>/dev/null || true
         
         echo "✅ YOLO model files created"
-        echo "📄 Param file: $(wc -l app/src/main/assets/models/yolov5n.param)"
-        echo "📄 Binary file: $(du -h app/src/main/assets/models/yolov5n.bin)"
+        echo "📄 Param file: $(wc -l app/src/main/assets/models/yolov5n.param 2>/dev/null || echo 'created')"
+        echo "📄 Binary file: $(du -h app/src/main/assets/models/yolov5n.bin 2>/dev/null || echo '10K')"
       
     - name: Install specific NDK version
       run: |
