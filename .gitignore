@@ -82,3 +82,10 @@ lint/generated/
 lint/outputs/
 lint/tmp/
 # lint/reports/
+# 忽略大文件和构建产物
+gradle-8.7/
+jdk-17.0.2/
+android-sdk/
+platform-tools/
+*.zip
+.gradle/
