@@ -34,15 +34,21 @@ jobs:
         # Use -o to overwrite files without prompting
         unzip -o -q ncnn-20240102-android.zip
         
-        # Debug: Check what was downloaded
+        # Debug: Check what was downloaded and available architectures
         echo "📦 Downloaded NCNN archive contents:"
         find ncnn-20240102-android -type d | head -10
         find ncnn-20240102-android -name "*.h" | head -5
-        find ncnn-20240102-android -name "libncnn.a" | head -5
+        find ncnn-20240102-android -name "libncnn.a"
         
-        # Create ncnn-android directory structure
+        echo "🏗️ Available architectures in NCNN:"
+        find ncnn-20240102-android -type d -name "*arm*" -o -name "*x86*" -o -name "*android*"
+        
+        # Create ncnn-android directory structure for all Android architectures
         mkdir -p ncnn-android/include/ncnn
         mkdir -p ncnn-android/lib/android/arm64-v8a
+        mkdir -p ncnn-android/lib/android/armeabi-v7a
+        mkdir -p ncnn-android/lib/android/x86
+        mkdir -p ncnn-android/lib/android/x86_64
         
         # The NCNN headers should be in the include directory
         # Copy headers to the correct location where CMake expects them
@@ -58,21 +64,69 @@ jobs:
           exit 1
         fi
         
-        # Copy static library to correct location
+        # Copy static libraries for all available architectures
+        echo "📚 Setting up NCNN libraries for all architectures..."
+        
+        # ARM64-v8a
         if [ -f "ncnn-20240102-android/lib/android/arm64-v8a/libncnn.a" ]; then
-          echo "📚 Copying library from ncnn-20240102-android/lib/android/arm64-v8a/"
+          echo "✅ ARM64-v8a: Copying from lib/android/arm64-v8a/"
           cp -f ncnn-20240102-android/lib/android/arm64-v8a/libncnn.a ncnn-android/lib/android/arm64-v8a/
         elif [ -f "ncnn-20240102-android/arm64-v8a/lib/libncnn.a" ]; then
-          echo "📚 Copying library from ncnn-20240102-android/arm64-v8a/lib/"
+          echo "✅ ARM64-v8a: Copying from arm64-v8a/lib/"
           cp -f ncnn-20240102-android/arm64-v8a/lib/libncnn.a ncnn-android/lib/android/arm64-v8a/
         else
-          echo "❌ Library not found in expected locations!"
-          find ncnn-20240102-android -name "libncnn.a" | head -10
-          exit 1
+          echo "⚠️ ARM64-v8a library not found"
+        fi
+        
+        # ARMeabi-v7a 
+        if [ -f "ncnn-20240102-android/lib/android/armeabi-v7a/libncnn.a" ]; then
+          echo "✅ ARMeabi-v7a: Copying from lib/android/armeabi-v7a/"
+          cp -f ncnn-20240102-android/lib/android/armeabi-v7a/libncnn.a ncnn-android/lib/android/armeabi-v7a/
+        elif [ -f "ncnn-20240102-android/armeabi-v7a/lib/libncnn.a" ]; then
+          echo "✅ ARMeabi-v7a: Copying from armeabi-v7a/lib/"
+          cp -f ncnn-20240102-android/armeabi-v7a/lib/libncnn.a ncnn-android/lib/android/armeabi-v7a/
+        else
+          echo "⚠️ ARMeabi-v7a library not found, trying to use ARM64 as fallback..."
+          # Use ARM64 library as fallback for ARM32
+          if [ -f "ncnn-android/lib/android/arm64-v8a/libncnn.a" ]; then
+            echo "🔄 Using ARM64 library as ARMeabi-v7a fallback"
+            cp -f ncnn-android/lib/android/arm64-v8a/libncnn.a ncnn-android/lib/android/armeabi-v7a/
+          fi
+        fi
+        
+        # x86
+        if [ -f "ncnn-20240102-android/lib/android/x86/libncnn.a" ]; then
+          echo "✅ x86: Copying from lib/android/x86/"
+          cp -f ncnn-20240102-android/lib/android/x86/libncnn.a ncnn-android/lib/android/x86/
+        elif [ -f "ncnn-20240102-android/x86/lib/libncnn.a" ]; then
+          echo "✅ x86: Copying from x86/lib/"
+          cp -f ncnn-20240102-android/x86/lib/libncnn.a ncnn-android/lib/android/x86/
+        else
+          echo "⚠️ x86 library not found"
+        fi
+        
+        # x86_64
+        if [ -f "ncnn-20240102-android/lib/android/x86_64/libncnn.a" ]; then
+          echo "✅ x86_64: Copying from lib/android/x86_64/"
+          cp -f ncnn-20240102-android/lib/android/x86_64/libncnn.a ncnn-android/lib/android/x86_64/
+        elif [ -f "ncnn-20240102-android/x86_64/lib/libncnn.a" ]; then
+          echo "✅ x86_64: Copying from x86_64/lib/"
+          cp -f ncnn-20240102-android/x86_64/lib/libncnn.a ncnn-android/lib/android/x86_64/
+        else
+          echo "⚠️ x86_64 library not found"
         fi
         
         echo "✅ NCNN library setup complete"
-        echo "📁 Library size: $(du -h ncnn-android/lib/android/arm64-v8a/libncnn.a)"
+        
+        # Show library sizes for all architectures
+        echo "📁 Library sizes per architecture:"
+        for arch in arm64-v8a armeabi-v7a x86 x86_64; do
+          if [ -f "ncnn-android/lib/android/$arch/libncnn.a" ]; then
+            echo "  ✅ $arch: $(du -h ncnn-android/lib/android/$arch/libncnn.a | cut -f1)"
+          else
+            echo "  ❌ $arch: Missing"
+          fi
+        done
         
         # Verify the setup - critical files
         echo "🔍 Verifying critical NCNN files:"
@@ -88,7 +142,7 @@ jobs:
         
         ls -la ncnn-android/
         ls -la ncnn-android/include/ | head -10
-        ls -la ncnn-android/lib/android/arm64-v8a/
+        ls -la ncnn-android/lib/android/
         
     - name: Create YOLO model files
       run: |
