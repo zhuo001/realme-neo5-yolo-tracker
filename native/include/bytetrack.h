@@ -3,6 +3,7 @@
 #include <cstdint>
 #include <optional>
 #include <unordered_map>
+#include "detector.h"
 
 struct Track {
     int id;
