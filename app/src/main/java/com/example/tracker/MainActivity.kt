@@ -226,26 +226,26 @@ class MainActivity : AppCompatActivity() {
         lifecycleScope.launch(Dispatchers.IO) {
             try {
                 // 从 assets 复制模型文件到内部存储
-                val paramPath = "${filesDir}/model.param"
-                val binPath = "${filesDir}/model.bin"
+                val paramPath = "${filesDir}/yolov5n_simple.param"
+                val binPath = "${filesDir}/yolov5n_test.bin"
                 
-                // 这里应该从 assets 复制文件，暂时跳过
-                // copyAssetToFile("model.param", paramPath)
-                // copyAssetToFile("model.bin", binPath)
+                // 复制模型文件
+                copyAssetToFile("models/yolov5n_simple.param", paramPath)
+                copyAssetToFile("models/yolov5n_test.bin", binPath)
                 
                 val success = NativeBridge.init(paramPath, binPath, INPUT_SIZE, NUM_CLASSES)
                 
                 withContext(Dispatchers.Main) {
                     if (success) {
-                        Log.i(TAG, "Native module initialized: ${NativeBridge.version()}")
-                        Toast.makeText(this@MainActivity, "模型加载成功", Toast.LENGTH_SHORT).show()
+                        Log.i(TAG, "Native module initialized with NCNN: ${NativeBridge.version()}")
+                        Toast.makeText(this@MainActivity, "NCNN模型加载成功", Toast.LENGTH_SHORT).show()
                     } else {
-                        Log.e(TAG, "Failed to initialize native module")
-                        Toast.makeText(this@MainActivity, "模型加载失败", Toast.LENGTH_SHORT).show()
+                        Log.e(TAG, "Failed to initialize NCNN native module")
+                        Toast.makeText(this@MainActivity, "NCNN模型加载失败", Toast.LENGTH_SHORT).show()
                     }
                 }
             } catch (e: Exception) {
-                Log.e(TAG, "Error initializing native module", e)
+                Log.e(TAG, "Error initializing NCNN native module", e)
             }
         }
     }
@@ -487,4 +487,18 @@ class MainActivity : AppCompatActivity() {
         // 例如：设置高性能模式、调整散热策略等
     }
     */
+    
+    private fun copyAssetToFile(assetPath: String, filePath: String) {
+        try {
+            assets.open(assetPath).use { inputStream ->
+                java.io.FileOutputStream(filePath).use { outputStream ->
+                    inputStream.copyTo(outputStream)
+                }
+            }
+            Log.d(TAG, "Asset copied: $assetPath -> $filePath")
+        } catch (e: Exception) {
+            Log.e(TAG, "Failed to copy asset: $assetPath", e)
+            throw e
+        }
+    }
 }
