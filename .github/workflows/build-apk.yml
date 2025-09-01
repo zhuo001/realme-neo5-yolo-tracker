@@ -54,13 +54,13 @@ jobs:
           
     - name: Download and setup compatible Gradle
       run: |
-        # Download Gradle 8.2 directly
-        wget https://services.gradle.org/distributions/gradle-8.2-bin.zip
-        unzip -q gradle-8.2-bin.zip
-        export PATH=$PWD/gradle-8.2/bin:$PATH
+        # Download Gradle 8.0 for better Java 17 compatibility
+        wget https://services.gradle.org/distributions/gradle-8.0-bin.zip
+        unzip -q gradle-8.0-bin.zip
+        export PATH=$PWD/gradle-8.0/bin:$PATH
         
         # Create wrapper with specific version
-        gradle wrapper --gradle-version 8.2 --no-daemon
+        gradle wrapper --gradle-version 8.0 --no-daemon
         chmod +x gradlew
         
         # Verify version
