@@ -132,3 +132,19 @@ jobs:
         name: realme-neo5-yolo-release-apk
         path: app/build/outputs/apk/release/app-release.apk
         retention-days: 30
+        
+    - name: Build Summary
+      run: |
+        echo "🎉 Android APK构建完成！"
+        echo "📱 为Realme Neo 5 150W设备构建的YOLO跟踪器APK已准备就绪"
+        echo ""
+        echo "📦 构建产物:"
+        echo "  • Debug APK: realme-neo5-yolo-debug-apk"
+        echo "  • Release APK: realme-neo5-yolo-release-apk"
+        echo ""
+        echo "⬇️ 下载方式:"
+        echo "  1. 点击Actions页面上的工作流运行"
+        echo "  2. 在Artifacts部分下载APK文件"
+        echo "  3. 传输到Realme Neo 5 150W设备并安装"
+        echo ""
+        echo "✅ 构建流程已完成，窗口可以关闭"
