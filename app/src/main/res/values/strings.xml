@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">YOLO Tracker</string>
+    <string name="camera_permission_required">需要相机权限</string>
+    <string name="model_load_success">模型加载成功</string>
+    <string name="model_load_failed">模型加载失败</string>
+    <string name="usb_connected">USB已连接</string>
+    <string name="usb_disconnected">USB已断开</string>
+    <string name="cpu_load">CPU负载</string>
+    <string name="gpu_load">GPU负载</string>
+    <string name="temperature">温度</string>
+    <string name="search_mode">搜索模式</string>
+    <string name="tracking_mode">追踪模式</string>
+    <string name="detection_config">检测配置</string>
+</resources>
