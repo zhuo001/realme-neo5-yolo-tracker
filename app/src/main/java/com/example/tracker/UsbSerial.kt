@@ -77,7 +77,7 @@ class UsbSerial(private val context: Context) {
         }
 
         try {
-            val sent = port.write(data, 1000) // 1秒超时
+            val sent = port.write(data, 1000) as? Int ?: -1 // 1秒超时
             Log.d(TAG, "Sent ${sent}/${data.size} bytes")
             sent
         } catch (e: Exception) {

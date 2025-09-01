@@ -54,10 +54,10 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         
-        // 设备检测和优化配置
-        val deviceOpt = DeviceDetector.getDeviceOptimizations()
-        Log.i(TAG, "检测到设备: ${deviceOpt.deviceName}, 应用优化配置")
-        applyDeviceOptimizations(deviceOpt)
+        // TODO: 设备检测和优化配置 - 需要实现 DeviceDetector 类
+        // val deviceOpt = DeviceDetector.getDeviceOptimizations()
+        // Log.i(TAG, "检测到设备: ${deviceOpt.deviceName}, 应用优化配置")
+        // applyDeviceOptimizations(deviceOpt)
         
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
@@ -264,7 +264,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private data class TrackInfo(
-    private data class UsbTrackRaw(
+        val id: Int,
         val label: Int,
         val cx: Int,
         val cy: Int,
@@ -274,7 +274,6 @@ class MainActivity : AppCompatActivity() {
     )
 
     private fun parseTrackFrame(buf: ByteArray, size: Int): List<TrackInfo> {
-    private fun parseTrackFrame(buf: ByteArray, size: Int): List<UsbTrackRaw> {
         if (buf[0].toInt() != 0xAA || buf[1].toInt() != 0x55) return emptyList()
         val payloadLen = buf[2].toInt() and 0xFF
         if (payloadLen + 4 > size) return emptyList()
@@ -284,15 +283,21 @@ class MainActivity : AppCompatActivity() {
         val trackCnt = buf[5].toInt() and 0xFF
         var offset = 6
         val tracks = ArrayList<TrackInfo>(trackCnt)
+        
+        fun rd16(): Int { 
+            val v = (buf[offset].toInt() and 0xFF) or ((buf[offset+1].toInt() and 0xFF) shl 8)
+            offset += 2
+            return if (v and 0x8000 != 0) v - 0x10000 else v 
+        }
+        
         for (i in 0 until trackCnt) {
             if (offset + 11 > size - 2) break
             val id = buf[offset].toInt() and 0xFF; offset++
             val label = buf[offset].toInt() and 0xFF; offset++
-            fun rd16(): Int { val v = (buf[offset].toInt() and 0xFF) or ((buf[offset+1].toInt() and 0xFF) shl 8); offset += 2; return if (v and 0x8000 != 0) v - 0x10000 else v }
             val cx = rd16(); val cy = rd16(); val w = rd16(); val h = rd16()
             val qScore = buf[offset].toInt() and 0xFF; offset++
-            tracks.add(TrackInfo(id,label,cx,cy,w,h,qScore/255f))
-            tracks.add(UsbTrackRaw(id,label,cx,cy,w,h,qScore/255f))
+            tracks.add(TrackInfo(id, label, cx, cy, w, h, qScore/255f))
+        }
         return tracks
     }
 
@@ -422,7 +427,9 @@ class MainActivity : AppCompatActivity() {
     
     /**
      * 应用设备特定的优化配置
+     * TODO: 需要实现 DeviceOptimizations 数据类
      */
+    /*
     private fun applyDeviceOptimizations(config: DeviceOptimizations) {
         Log.i(TAG, "应用设备优化: ${config.deviceName}")
         
@@ -455,7 +462,9 @@ class MainActivity : AppCompatActivity() {
             }
         }
     }
+    */
     
+    /*
     private fun enableGpuAcceleration() {
         // GPU加速初始化逻辑
         Log.d(TAG, "启用GPU加速推理")
@@ -463,7 +472,7 @@ class MainActivity : AppCompatActivity() {
     
     private fun setupParallelProcessing(threads: Int) {
         // 并行处理设置
-        Log.d(TAG, "设置$threads个并行处理线程")
+        Log.d(TAG, "设置${threads}个并行处理线程")
     }
     
     private fun applyRealmeNeo5Optimizations(config: DeviceOptimizations) {
@@ -477,4 +486,5 @@ class MainActivity : AppCompatActivity() {
         // 这里可以添加更多Realme特定的优化
         // 例如：设置高性能模式、调整散热策略等
     }
+    */
 }
