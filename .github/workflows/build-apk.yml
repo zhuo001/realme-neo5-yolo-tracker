@@ -36,22 +36,22 @@ jobs:
         
         # Create ncnn-android directory structure
         mkdir -p ncnn-android/include
-        mkdir -p ncnn-android/lib/android/arm64-v8a/lib
+        mkdir -p ncnn-android/lib/android/arm64-v8a
         
         # Copy headers (force overwrite)
         cp -rf ncnn-20240102-android/arm64-v8a/include/* ncnn-android/include/
         
-        # Copy static library (force overwrite)
-        cp -f ncnn-20240102-android/arm64-v8a/lib/libncnn.a ncnn-android/lib/android/arm64-v8a/lib/
+        # Copy static library to correct location (force overwrite)
+        cp -f ncnn-20240102-android/arm64-v8a/lib/libncnn.a ncnn-android/lib/android/arm64-v8a/
         
         echo "✅ NCNN library setup complete"
-        echo "📁 Library size: $(du -h ncnn-android/lib/android/arm64-v8a/lib/libncnn.a)"
+        echo "📁 Library size: $(du -h ncnn-android/lib/android/arm64-v8a/libncnn.a)"
         
         # Verify the setup
         echo "🔍 Verifying NCNN structure:"
         ls -la ncnn-android/
         ls -la ncnn-android/include/ncnn/ | head -10
-        ls -la ncnn-android/lib/android/arm64-v8a/lib/
+        ls -la ncnn-android/lib/android/arm64-v8a/
         
     - name: Create YOLO model files
       run: |
