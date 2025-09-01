@@ -226,12 +226,12 @@ class MainActivity : AppCompatActivity() {
         lifecycleScope.launch(Dispatchers.IO) {
             try {
                 // 从 assets 复制模型文件到内部存储
-                val paramPath = "${filesDir}/yolov5n_simple.param"
-                val binPath = "${filesDir}/yolov5n_test.bin"
+                val paramPath = "${filesDir}/yolov5n.param"
+                val binPath = "${filesDir}/yolov5n.bin"
                 
                 // 复制模型文件
-                copyAssetToFile("models/yolov5n_simple.param", paramPath)
-                copyAssetToFile("models/yolov5n_test.bin", binPath)
+                copyAssetToFile("models/yolov5n.param", paramPath)
+                copyAssetToFile("models/yolov5n.bin", binPath)
                 
                 val success = NativeBridge.init(paramPath, binPath, INPUT_SIZE, NUM_CLASSES)
                 
