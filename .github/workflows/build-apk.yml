@@ -62,11 +62,14 @@ jobs:
           exit 1
         fi
         
-        # Create NCNN directory structure
+        # Create NCNN directory structure for all architectures
         mkdir -p ncnn-android/include
         mkdir -p ncnn-android/lib/android/arm64-v8a
+        mkdir -p ncnn-android/lib/android/armeabi-v7a
+        mkdir -p ncnn-android/lib/android/x86
+        mkdir -p ncnn-android/lib/android/x86_64
         
-        # Copy header files
+        # Copy header files (shared across architectures)
         if [ -d "ncnn-20240102-android/arm64-v8a/include" ]; then
           cp -r ncnn-20240102-android/arm64-v8a/include/* ncnn-android/include/
         else
@@ -75,18 +78,28 @@ jobs:
           ls -la ncnn-20240102-android/arm64-v8a/
         fi
         
-        # Copy static library
-        if [ -f "ncnn-20240102-android/arm64-v8a/lib/libncnn.a" ]; then
-          cp ncnn-20240102-android/arm64-v8a/lib/libncnn.a ncnn-android/lib/android/arm64-v8a/
-        else
-          echo "Warning: NCNN static library not found"
-          find ncnn-20240102-android -name "*.a" -type f
-        fi
+        # Copy static libraries for all architectures
+        for arch in arm64-v8a armeabi-v7a x86 x86_64; do
+          if [ -f "ncnn-20240102-android/${arch}/lib/libncnn.a" ]; then
+            cp "ncnn-20240102-android/${arch}/lib/libncnn.a" "ncnn-android/lib/android/${arch}/"
+            echo "✅ Copied ${arch} library"
+          else
+            echo "⚠️  Warning: NCNN ${arch} library not found"
+          fi
+        done
         
         echo "NCNN library setup completed:"
         ls -la ncnn-android/
         ls -la ncnn-android/include/ 2>/dev/null || echo "No include directory"
-        ls -la ncnn-android/lib/android/arm64-v8a/ 2>/dev/null || echo "No lib directory"
+        
+        # Check all architecture libraries
+        for arch in arm64-v8a armeabi-v7a x86 x86_64; do
+          if [ -f "ncnn-android/lib/android/${arch}/libncnn.a" ]; then
+            echo "✅ ${arch}: $(du -h ncnn-android/lib/android/${arch}/libncnn.a)"
+          else
+            echo "❌ ${arch}: Missing"
+          fi
+        done
         
     - name: Verify NCNN setup
       run: |
@@ -103,16 +116,26 @@ jobs:
           exit 1
         fi
         
-        if [ ! -f "ncnn-android/lib/android/arm64-v8a/libncnn.a" ]; then
-          echo "ERROR: libncnn.a not found"
-          echo "Available files in lib directory:"
-          find ncnn-android -name "*.a" -type f 2>/dev/null || echo "No .a files found"
+        if [ ! -d "ncnn-android/include" ]; then
+          echo "ERROR: ncnn-android/include directory not found"
           exit 1
         fi
         
-        # Check file sizes
-        echo "NCNN library file sizes:"
-        du -h ncnn-android/lib/android/arm64-v8a/libncnn.a
+        # Check at least one architecture exists
+        arch_found=false
+        for arch in arm64-v8a armeabi-v7a x86 x86_64; do
+          if [ -f "ncnn-android/lib/android/${arch}/libncnn.a" ]; then
+            arch_found=true
+            echo "✅ Found ${arch} library: $(du -h ncnn-android/lib/android/${arch}/libncnn.a)"
+          fi
+        done
+        
+        if [ "$arch_found" = false ]; then
+          echo "ERROR: No NCNN libraries found for any architecture"
+          echo "Available files in ncnn-20240102-android:"
+          find ncnn-20240102-android -name "*.a" -type f 2>/dev/null || echo "No .a files found"
+          exit 1
+        fi
         echo "Header files count:"
         find ncnn-android/include -name "*.h" | wc -l
         
