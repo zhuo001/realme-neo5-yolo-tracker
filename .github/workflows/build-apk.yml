@@ -36,24 +36,84 @@ jobs:
         
     - name: Download and setup NCNN library
       run: |
-        echo "下载NCNN Android库..."
-        wget https://github.com/Tencent/ncnn/releases/download/20240102/ncnn-20240102-android.zip
+        echo "Downloading NCNN Android library..."
+        
+        # Download with retry mechanism
+        for i in {1..3}; do
+          wget https://github.com/Tencent/ncnn/releases/download/20240102/ncnn-20240102-android.zip && break
+          echo "Download attempt $i failed, retrying..."
+          sleep 5
+        done
+        
+        if [ ! -f "ncnn-20240102-android.zip" ]; then
+          echo "Failed to download NCNN library after 3 attempts"
+          exit 1
+        fi
+        
+        echo "Download successful, extracting..."
         unzip -q ncnn-20240102-android.zip
         
-        # 创建NCNN目录结构
+        # Verify extraction
+        if [ ! -d "ncnn-20240102-android" ]; then
+          echo "Failed to extract NCNN library"
+          exit 1
+        fi
+        
+        # Create NCNN directory structure
         mkdir -p ncnn-android/include
         mkdir -p ncnn-android/lib/android/arm64-v8a
         
-        # 复制头文件
-        cp -r ncnn-20240102-android/arm64-v8a/include/* ncnn-android/include/
+        # Copy header files
+        if [ -d "ncnn-20240102-android/arm64-v8a/include" ]; then
+          cp -r ncnn-20240102-android/arm64-v8a/include/* ncnn-android/include/
+        else
+          echo "Warning: NCNN include directory not found"
+          ls -la ncnn-20240102-android/
+          ls -la ncnn-20240102-android/arm64-v8a/
+        fi
         
-        # 复制静态库
-        cp ncnn-20240102-android/arm64-v8a/lib/libncnn.a ncnn-android/lib/android/arm64-v8a/
+        # Copy static library
+        if [ -f "ncnn-20240102-android/arm64-v8a/lib/libncnn.a" ]; then
+          cp ncnn-20240102-android/arm64-v8a/lib/libncnn.a ncnn-android/lib/android/arm64-v8a/
+        else
+          echo "Warning: NCNN static library not found"
+          find ncnn-20240102-android -name "*.a" -type f
+        fi
         
-        echo "NCNN库设置完成:"
+        echo "NCNN library setup completed:"
         ls -la ncnn-android/
-        ls -la ncnn-android/include/
-        ls -la ncnn-android/lib/android/arm64-v8a/
+        ls -la ncnn-android/include/ 2>/dev/null || echo "No include directory"
+        ls -la ncnn-android/lib/android/arm64-v8a/ 2>/dev/null || echo "No lib directory"
+        
+    - name: Verify NCNN setup
+      run: |
+        echo "Verifying NCNN library setup..."
+        
+        # Check if directories exist
+        if [ ! -d "ncnn-android" ]; then
+          echo "ERROR: ncnn-android directory not found"
+          exit 1
+        fi
+        
+        if [ ! -d "ncnn-android/include" ]; then
+          echo "ERROR: ncnn-android/include directory not found"
+          exit 1
+        fi
+        
+        if [ ! -f "ncnn-android/lib/android/arm64-v8a/libncnn.a" ]; then
+          echo "ERROR: libncnn.a not found"
+          echo "Available files in lib directory:"
+          find ncnn-android -name "*.a" -type f 2>/dev/null || echo "No .a files found"
+          exit 1
+        fi
+        
+        # Check file sizes
+        echo "NCNN library file sizes:"
+        du -h ncnn-android/lib/android/arm64-v8a/libncnn.a
+        echo "Header files count:"
+        find ncnn-android/include -name "*.h" | wc -l
+        
+        echo "✅ NCNN setup verification completed successfully"
         
     - name: Setup Gradle with network retry
       run: |
@@ -99,6 +159,20 @@ jobs:
           echo "ndk.dir=$ANDROID_NDK_ROOT" >> local.properties
         fi
         cat local.properties
+        
+    - name: Debug project structure before build
+      run: |
+        echo "🔍 Project structure debug:"
+        echo "Current directory: $(pwd)"
+        echo "NCNN directory exists: $(test -d ncnn-android && echo 'YES' || echo 'NO')"
+        echo "CMakeLists.txt content:"
+        cat app/src/main/cpp/CMakeLists.txt | grep -A 10 -B 2 "NCNN"
+        echo ""
+        echo "Project file structure:"
+        find . -type f -name "*.cpp" -o -name "*.h" -o -name "CMakeLists.txt" | head -20
+        echo ""
+        echo "NCNN files:"
+        ls -la ncnn-android/ 2>/dev/null || echo "No ncnn-android directory"
         
     - name: Clean project
       run: |

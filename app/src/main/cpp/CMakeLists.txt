@@ -8,14 +8,22 @@ find_library(log-lib log)
 
 # 添加 ncnn 预编译库路径 (需要下载 ncnn-android 包)
 set(NCNN_DIR ${CMAKE_SOURCE_DIR}/../../../../ncnn-android)
+message(STATUS "Looking for NCNN at: ${NCNN_DIR}")
+
 if(EXISTS ${NCNN_DIR})
     add_library(ncnn STATIC IMPORTED)
     set_target_properties(ncnn PROPERTIES IMPORTED_LOCATION
         ${NCNN_DIR}/lib/android/${ANDROID_ABI}/libncnn.a)
     target_include_directories(ncnn INTERFACE ${NCNN_DIR}/include)
     message(STATUS "Using NCNN from: ${NCNN_DIR}")
+    message(STATUS "NCNN library: ${NCNN_DIR}/lib/android/${ANDROID_ABI}/libncnn.a")
+    message(STATUS "NCNN headers: ${NCNN_DIR}/include")
 else()
     message(WARNING "NCNN not found at ${NCNN_DIR}, building stub version")
+    message(STATUS "Available directories:")
+    execute_process(COMMAND ls -la ${CMAKE_SOURCE_DIR}/../../../.. 
+                   OUTPUT_VARIABLE LS_OUTPUT)
+    message(STATUS "${LS_OUTPUT}")
 endif()
 
 # 主库
