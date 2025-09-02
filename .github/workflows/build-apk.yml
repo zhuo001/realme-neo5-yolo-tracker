@@ -27,155 +27,33 @@ jobs:
     - name: Accept Android licenses
       run: yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses || true
       
-    - name: Download and setup NCNN library
-      run: |
-        echo "🔄 Downloading NCNN library for Android..."
-        wget https://github.com/Tencent/ncnn/releases/download/20240102/ncnn-20240102-android.zip
-        # Use -o to overwrite files without prompting
-        unzip -o -q ncnn-20240102-android.zip
-        
-        # Debug: Check what was downloaded and available architectures
-        echo "📦 Downloaded NCNN archive contents:"
-        find ncnn-20240102-android -type d | head -10
-        find ncnn-20240102-android -name "*.h" | head -5
-        find ncnn-20240102-android -name "libncnn.a"
-        
-        echo "🏗️ Available architectures in NCNN:"
-        find ncnn-20240102-android -type d -name "*arm*" -o -name "*x86*" -o -name "*android*"
-        
-        # Create ncnn-android directory structure for all Android architectures
-        mkdir -p ncnn-android/include/ncnn
-        mkdir -p ncnn-android/lib/android/arm64-v8a
-        mkdir -p ncnn-android/lib/android/armeabi-v7a
-        mkdir -p ncnn-android/lib/android/x86
-        mkdir -p ncnn-android/lib/android/x86_64
-        
-        # The NCNN headers should be in the include directory
-        # Copy headers to the correct location where CMake expects them
-        if [ -d "ncnn-20240102-android/include" ]; then
-          echo "📋 Copying headers from ncnn-20240102-android/include/"
-          cp -rf ncnn-20240102-android/include/* ncnn-android/include/
-        elif [ -d "ncnn-20240102-android/arm64-v8a/include" ]; then
-          echo "📋 Copying headers from ncnn-20240102-android/arm64-v8a/include/"
-          cp -rf ncnn-20240102-android/arm64-v8a/include/* ncnn-android/include/
-        else
-          echo "❌ Headers not found in expected locations!"
-          find ncnn-20240102-android -name "*.h" | head -10
-          exit 1
-        fi
-        
-        # Copy static libraries for all available architectures
-        echo "📚 Setting up NCNN libraries for all architectures..."
-        
-        # ARM64-v8a
-        if [ -f "ncnn-20240102-android/lib/android/arm64-v8a/libncnn.a" ]; then
-          echo "✅ ARM64-v8a: Copying from lib/android/arm64-v8a/"
-          cp -f ncnn-20240102-android/lib/android/arm64-v8a/libncnn.a ncnn-android/lib/android/arm64-v8a/
-        elif [ -f "ncnn-20240102-android/arm64-v8a/lib/libncnn.a" ]; then
-          echo "✅ ARM64-v8a: Copying from arm64-v8a/lib/"
-          cp -f ncnn-20240102-android/arm64-v8a/lib/libncnn.a ncnn-android/lib/android/arm64-v8a/
-        else
-          echo "⚠️ ARM64-v8a library not found"
-        fi
-        
-        # ARMeabi-v7a 
-        if [ -f "ncnn-20240102-android/lib/android/armeabi-v7a/libncnn.a" ]; then
-          echo "✅ ARMeabi-v7a: Copying from lib/android/armeabi-v7a/"
-          cp -f ncnn-20240102-android/lib/android/armeabi-v7a/libncnn.a ncnn-android/lib/android/armeabi-v7a/
-        elif [ -f "ncnn-20240102-android/armeabi-v7a/lib/libncnn.a" ]; then
-          echo "✅ ARMeabi-v7a: Copying from armeabi-v7a/lib/"
-          cp -f ncnn-20240102-android/armeabi-v7a/lib/libncnn.a ncnn-android/lib/android/armeabi-v7a/
-        else
-          echo "⚠️ ARMeabi-v7a library not found, trying to use ARM64 as fallback..."
-          # Use ARM64 library as fallback for ARM32
-          if [ -f "ncnn-android/lib/android/arm64-v8a/libncnn.a" ]; then
-            echo "🔄 Using ARM64 library as ARMeabi-v7a fallback"
-            cp -f ncnn-android/lib/android/arm64-v8a/libncnn.a ncnn-android/lib/android/armeabi-v7a/
-          fi
-        fi
-        
-        # x86
-        if [ -f "ncnn-20240102-android/lib/android/x86/libncnn.a" ]; then
-          echo "✅ x86: Copying from lib/android/x86/"
-          cp -f ncnn-20240102-android/lib/android/x86/libncnn.a ncnn-android/lib/android/x86/
-        elif [ -f "ncnn-20240102-android/x86/lib/libncnn.a" ]; then
-          echo "✅ x86: Copying from x86/lib/"
-          cp -f ncnn-20240102-android/x86/lib/libncnn.a ncnn-android/lib/android/x86/
-        else
-          echo "⚠️ x86 library not found"
-        fi
-        
-        # x86_64
-        if [ -f "ncnn-20240102-android/lib/android/x86_64/libncnn.a" ]; then
-          echo "✅ x86_64: Copying from lib/android/x86_64/"
-          cp -f ncnn-20240102-android/lib/android/x86_64/libncnn.a ncnn-android/lib/android/x86_64/
-        elif [ -f "ncnn-20240102-android/x86_64/lib/libncnn.a" ]; then
-          echo "✅ x86_64: Copying from x86_64/lib/"
-          cp -f ncnn-20240102-android/x86_64/lib/libncnn.a ncnn-android/lib/android/x86_64/
-        else
-          echo "⚠️ x86_64 library not found"
-        fi
-        
-        echo "✅ NCNN library setup complete"
-        
-        # Show library sizes for all architectures
-        echo "📁 Library sizes per architecture:"
-        for arch in arm64-v8a armeabi-v7a x86 x86_64; do
-          if [ -f "ncnn-android/lib/android/$arch/libncnn.a" ]; then
-            echo "  ✅ $arch: $(du -h ncnn-android/lib/android/$arch/libncnn.a | cut -f1)"
-          else
-            echo "  ❌ $arch: Missing"
-          fi
-        done
-        
-        # Verify the setup - critical files
-        echo "🔍 Verifying critical NCNN files:"
-        if [ -f "ncnn-android/include/net.h" ]; then
-          echo "✅ net.h found at ncnn-android/include/net.h"
-        elif [ -f "ncnn-android/include/ncnn/net.h" ]; then
-          echo "✅ net.h found at ncnn-android/include/ncnn/net.h"
-        else
-          echo "❌ net.h not found! Available headers:"
-          find ncnn-android/include -name "*.h" | head -10
-          exit 1
-        fi
-        
-        ls -la ncnn-android/
-        ls -la ncnn-android/include/ | head -10
-        ls -la ncnn-android/lib/android/
-        
-    - name: Create YOLO model files
-      run: |
-        echo "🧠 Creating YOLO model configuration files..."
-        mkdir -p app/src/main/assets/models
-        
-        # Create simplified YOLO model param file
-        cat > app/src/main/assets/models/yolov5n.param << 'EOF'
-        7767517
-        8 8
-        Input            images                   0 1 images
-        Convolution      conv1                    1 1 images conv1_out 0=32 1=3 3=1 4=1 5=1 6=864
-        Swish            act1                     1 1 conv1_out act1_out  
-        Convolution      conv2                    1 1 act1_out conv2_out 0=64 1=3 3=2 4=1 5=1 6=18432
-        Swish            act2                     1 1 conv2_out act2_out
-        AdaptiveAvgPool2d pool                   1 1 act2_out pool_out 0=1 1=1
-        Flatten          flatten                  1 1 pool_out flatten_out
-        InnerProduct     output                   1 1 flatten_out output 0=85 1=1 2=5440
-        EOF
-        
-        # Create minimal binary weights file (for testing) - force create without interaction
-        dd if=/dev/zero of=app/src/main/assets/models/yolov5n.bin bs=1024 count=10 2>/dev/null || true
-        
-        echo "✅ YOLO model files created"
-        echo "📄 Param file: $(wc -l app/src/main/assets/models/yolov5n.param 2>/dev/null || echo 'created')"
-        echo "📄 Binary file: $(du -h app/src/main/assets/models/yolov5n.bin 2>/dev/null || echo '10K')"
-      
     - name: Install specific NDK version
       run: |
         # Install NDK 27.3.13750724 to match system
         $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager "ndk;27.3.13750724" || true
         # Also install NDK bundle as fallback
         $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager "ndk-bundle" || true
+        
+    - name: Download and setup NCNN library
+      run: |
+        echo "下载NCNN Android库..."
+        wget https://github.com/Tencent/ncnn/releases/download/20240102/ncnn-20240102-android.zip
+        unzip -q ncnn-20240102-android.zip
+        
+        # 创建NCNN目录结构
+        mkdir -p ncnn-android/include
+        mkdir -p ncnn-android/lib/android/arm64-v8a
+        
+        # 复制头文件
+        cp -r ncnn-20240102-android/arm64-v8a/include/* ncnn-android/include/
+        
+        # 复制静态库
+        cp ncnn-20240102-android/arm64-v8a/lib/libncnn.a ncnn-android/lib/android/arm64-v8a/
+        
+        echo "NCNN库设置完成:"
+        ls -la ncnn-android/
+        ls -la ncnn-android/include/
+        ls -la ncnn-android/lib/android/arm64-v8a/
         
     - name: Setup Gradle with network retry
       run: |
@@ -230,49 +108,31 @@ jobs:
           gradle clean --no-daemon --stacktrace
         fi
         
-    - name: Build Debug APK with NCNN integration
+    - name: Build Debug APK with retry
       run: |
-        echo "🔨 Building Debug APK with NCNN integration..."
         GRADLE_CMD="gradle"
         if [ -f gradlew ]; then
           GRADLE_CMD="./gradlew"
         fi
         
-        # Set environment variables for NCNN
-        export NCNN_ENABLED=true
-        export CMAKE_ARGS="-DUSE_NCNN=ON"
-        
         for i in {1..3}; do
-          echo "🔄 Build attempt $i"
-          $GRADLE_CMD assembleDebug --no-daemon --stacktrace --info
-          if [ $? -eq 0 ]; then 
-            echo "✅ Debug APK build successful!"
-            break
-          fi
-          echo "❌ Attempt $i failed, retrying..."
+          $GRADLE_CMD assembleDebug --no-daemon --stacktrace --offline || $GRADLE_CMD assembleDebug --no-daemon --stacktrace
+          if [ $? -eq 0 ]; then break; fi
+          echo "Attempt $i failed, retrying..."
           sleep 10
         done
       
-    - name: Build Release APK with NCNN integration
+    - name: Build Release APK with retry
       run: |
-        echo "🔨 Building Release APK with NCNN integration..."
         GRADLE_CMD="gradle"
         if [ -f gradlew ]; then
           GRADLE_CMD="./gradlew"
         fi
         
-        # Set environment variables for NCNN
-        export NCNN_ENABLED=true
-        export CMAKE_ARGS="-DUSE_NCNN=ON"
-        
         for i in {1..3}; do
-          echo "🔄 Build attempt $i"
-          $GRADLE_CMD assembleRelease --no-daemon --stacktrace --info
-          if [ $? -eq 0 ]; then 
-            echo "✅ Release APK build successful!"
-            break
-          fi
-          echo "❌ Attempt $i failed, retrying..."
+          $GRADLE_CMD assembleRelease --no-daemon --stacktrace --offline || $GRADLE_CMD assembleRelease --no-daemon --stacktrace
+          if [ $? -eq 0 ]; then break; fi
+          echo "Attempt $i failed, retrying..."
           sleep 10
         done
         
@@ -294,65 +154,28 @@ jobs:
         path: app/build/outputs/apk/release/app-release.apk
         retention-days: 30
         
-    - name: Verify APK builds and show details
-      run: |
-        echo "📊 APK Build Verification"
-        echo "========================="
-        
-        if [ -f "app/build/outputs/apk/debug/app-debug.apk" ]; then
-          DEBUG_SIZE=$(du -h app/build/outputs/apk/debug/app-debug.apk | cut -f1)
-          echo "✅ Debug APK: $DEBUG_SIZE"
-        else
-          echo "❌ Debug APK: Not found"
-        fi
-        
-        if [ -f "app/build/outputs/apk/release/app-release.apk" ]; then
-          RELEASE_SIZE=$(du -h app/build/outputs/apk/release/app-release.apk | cut -f1)
-          echo "✅ Release APK: $RELEASE_SIZE"
-        else
-          echo "❌ Release APK: Not found"
-        fi
-        
-        echo ""
-        echo "🔍 All APK files:"
-        find app/build/outputs/apk -name "*.apk" -type f -exec ls -lh {} \;
-        
     - name: Build Summary and Auto-Complete
       run: |
-        echo "🎉 带NCNN的Android APK构建完成！"
+        echo "🎉 Android APK构建完成！"
         echo "📱 为Realme Neo 5 150W设备构建的YOLO跟踪器APK已准备就绪"
         echo ""
-        echo "🧠 NCNN集成特性:"
-        echo "  • NCNN深度学习框架集成"
-        echo "  • YOLOv5模型支持"
-        echo "  • 实时目标检测和跟踪"
-        echo "  • ARM64-v8a架构优化"
-        echo ""
         echo "📦 构建产物:"
-        echo "  • Debug APK: realme-neo5-yolo-debug-apk (包含NCNN)"
-        echo "  • Release APK: realme-neo5-yolo-release-apk (包含NCNN)"
+        echo "  • Debug APK: realme-neo5-yolo-debug-apk"
+        echo "  • Release APK: realme-neo5-yolo-release-apk"
         echo ""
         echo "⬇️ 下载方式:"
         echo "  1. 点击Actions页面上的工作流运行"
         echo "  2. 在Artifacts部分下载APK文件"
         echo "  3. 传输到Realme Neo 5 150W设备并安装"
-        echo "  4. 启动应用测试YOLO目标检测功能"
         echo ""
-        echo "🚀 测试建议:"
-        echo "  • 检查应用启动无崩溃"
-        echo "  • 验证YOLO推理时间显示 (>0.0ms)"
-        echo "  • 测试目标检测和跟踪功能"
-        echo "  • 检查置信度阈值调整功能"
-        echo ""
-        echo "✅ 构建流程已完成，NCNN集成APK已准备就绪"
+        echo "✅ 构建流程已完成，传输完成后将自动关闭"
         echo ""
         echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-        echo "🏁 NCNN集成构建任务完成 - 所有APK文件已上传至Artifacts"
+        echo "🏁 构建任务完成 - 所有APK文件已上传至Artifacts"
         echo "🔒 工作流程已结束，终端将自动关闭以释放资源"
         echo "📤 传输完成，任务结束，窗口自动退出"
         echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
         
         # 标记构建完成
         echo "BUILD_COMPLETE=true" >> $GITHUB_ENV
-        echo "NCNN_INTEGRATED=true" >> $GITHUB_ENV
-        echo "::notice title=NCNN Build Complete::Android APK with NCNN integration构建已完成，可以下载APK文件"
+        echo "::notice title=Build Complete::Android APK构建已完成，可以下载APK文件"

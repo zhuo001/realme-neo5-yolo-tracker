@@ -12,27 +12,8 @@ if(EXISTS ${NCNN_DIR})
     add_library(ncnn STATIC IMPORTED)
     set_target_properties(ncnn PROPERTIES IMPORTED_LOCATION
         ${NCNN_DIR}/lib/android/${ANDROID_ABI}/libncnn.a)
-    
-    # 设置 NCNN 头文件路径 - 支持多种可能的目录结构
-    if(EXISTS ${NCNN_DIR}/include/ncnn)
-        target_include_directories(ncnn INTERFACE ${NCNN_DIR}/include)
-        message(STATUS "Using NCNN headers from: ${NCNN_DIR}/include")
-    elseif(EXISTS ${NCNN_DIR}/include/net.h)
-        target_include_directories(ncnn INTERFACE ${NCNN_DIR}/include)
-        message(STATUS "Using NCNN headers from: ${NCNN_DIR}/include")
-    else()
-        message(WARNING "NCNN headers not found in expected locations!")
-        # 尝试查找可能的头文件位置
-        file(GLOB_RECURSE NCNN_HEADERS "${NCNN_DIR}/**/net.h")
-        if(NCNN_HEADERS)
-            get_filename_component(NCNN_INCLUDE_DIR "${NCNN_HEADERS}" DIRECTORY)
-            target_include_directories(ncnn INTERFACE ${NCNN_INCLUDE_DIR})
-            message(STATUS "Found NCNN headers at: ${NCNN_INCLUDE_DIR}")
-        endif()
-    endif()
-    
+    target_include_directories(ncnn INTERFACE ${NCNN_DIR}/include)
     message(STATUS "Using NCNN from: ${NCNN_DIR}")
-    message(STATUS "NCNN library: ${NCNN_DIR}/lib/android/${ANDROID_ABI}/libncnn.a")
 else()
     message(WARNING "NCNN not found at ${NCNN_DIR}, building stub version")
 endif()
@@ -55,20 +36,8 @@ target_link_libraries(yolo_tracker
     ${log-lib}
 )
 
-# 如果有 ncnn，链接它和 OpenMP
+# 如果有 ncnn，链接它
 if(TARGET ncnn)
     target_link_libraries(yolo_tracker ncnn)
     target_compile_definitions(yolo_tracker PRIVATE USE_NCNN=1)
-    
-    # 添加 OpenMP 支持 - NCNN 需要 OpenMP
-    find_package(OpenMP)
-    if(OpenMP_CXX_FOUND)
-        target_link_libraries(yolo_tracker OpenMP::OpenMP_CXX)
-        message(STATUS "OpenMP found and linked")
-    else()
-        # 手动链接 OpenMP - Android NDK 通常使用这个方法
-        target_link_libraries(yolo_tracker -fopenmp)
-        target_compile_options(yolo_tracker PRIVATE -fopenmp)
-        message(STATUS "OpenMP manually linked with -fopenmp")
-    endif()
 endif()

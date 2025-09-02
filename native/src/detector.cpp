@@ -153,9 +153,17 @@ std::vector<Detection> YoloDetector::infer(const uint8_t* rgba, int width, int h
     return testDets;
     
 #else
-    (void)scale; (void)padX; (void)padY; (void)S; (void)width; (void)height;
-    printf("Stub inference - no NCNN support\n");
-    return {};
+    (void)scale; (void)padX; (void)padY; (void)S; 
+    printf("Stub inference - creating test detection\n");
+    
+    // 创建测试检测结果
+    std::vector<Detection> testDets;
+    testDets.push_back({
+        width * 0.3f, height * 0.3f, 
+        width * 0.7f, height * 0.7f,
+        0.75f, 0  // 75%置信度，类别0
+    });
+    return testDets;
 #endif
 }
 
