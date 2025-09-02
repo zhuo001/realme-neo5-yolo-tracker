@@ -6,7 +6,9 @@
 
 // 若未集成 ncnn，可不定义 USE_NCNN，代码会退化为空实现
 #ifdef USE_NCNN
-#include <net.h>
+#include <ncnn/net.h>
+#include <ncnn/mat.h>
+#include <ncnn/option.h>
 #endif
 
 struct Detection {
