@@ -147,13 +147,14 @@
 
         <div class="grid">
             <div class="card status-running">
-                <h3>🔄 构建状态</h3>
+                <h3>� 构建修复状态</h3>
                 <div class="progress-bar">
                     <div class="progress-fill"></div>
                 </div>
-                <p><strong>当前阶段:</strong> NCNN 库集成和编译</p>
-                <p><strong>预计剩余:</strong> <span class="highlight">3-5 分钟</span></p>
-                <p><strong>提交:</strong> f3152aa</p>
+                <p><strong>当前阶段:</strong> 修复 NCNN 集成错误</p>
+                <p><strong>修复内容:</strong> 下载重试、错误处理、路径验证</p>
+                <p><strong>提交:</strong> b364d34 (修复版本)</p>
+                <p><strong>预计完成:</strong> <span class="highlight">5-7 分钟</span></p>
             </div>
 
             <div class="card">
@@ -162,7 +163,8 @@
                     <li class="step-complete">检出代码仓库</li>
                     <li class="step-complete">配置 JDK 17 环境</li>
                     <li class="step-complete">安装 Android SDK/NDK</li>
-                    <li class="step-running">下载 NCNN 库文件</li>
+                    <li class="step-running">下载和验证 NCNN 库</li>
+                    <li class="step-pending">验证项目结构</li>
                     <li class="step-pending">编译 Native 代码</li>
                     <li class="step-pending">构建 APK 文件</li>
                     <li class="step-pending">上传构建产物</li>
@@ -185,13 +187,13 @@
             </div>
 
             <div class="card">
-                <h3>🔧 技术改进</h3>
+                <h3>🔧 修复内容</h3>
                 <ul>
-                    <li>✅ 集成 NCNN 20240102 版本</li>
-                    <li>✅ 添加 YOLOv5 模型参数文件</li>
-                    <li>✅ 更新 CMakeLists.txt 链接配置</li>
-                    <li>✅ 修改 detector.cpp 返回测试结果</li>
-                    <li>✅ 优化 MainActivity 模型加载流程</li>
+                    <li>✅ 添加 NCNN 下载重试机制</li>
+                    <li>✅ 增强错误处理和验证步骤</li>
+                    <li>✅ 修复 CMakeLists.txt 路径问题</li>
+                    <li>✅ 添加构建前调试步骤</li>
+                    <li>🔄 正在重新构建...</li>
                 </ul>
             </div>
 

@@ -51,7 +51,10 @@ jobs:
         fi
         
         echo "Download successful, extracting..."
-        unzip -q ncnn-20240102-android.zip
+        # Remove existing directory if present to avoid conflicts
+        rm -rf ncnn-20240102-android/
+        # Extract with overwrite option to avoid interactive prompts
+        unzip -o ncnn-20240102-android.zip
         
         # Verify extraction
         if [ ! -d "ncnn-20240102-android" ]; then
