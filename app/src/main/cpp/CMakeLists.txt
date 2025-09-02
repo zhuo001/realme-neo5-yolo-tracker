@@ -3,6 +3,9 @@ project("yolo_tracker")
 
 set(CMAKE_CXX_STANDARD 17)
 
+# Enable OpenMP support for NCNN
+find_package(OpenMP REQUIRED)
+
 # 查找预编译的 ncnn
 find_library(log-lib log)
 
@@ -15,6 +18,11 @@ if(EXISTS ${NCNN_DIR})
     set_target_properties(ncnn PROPERTIES IMPORTED_LOCATION
         ${NCNN_DIR}/lib/android/${ANDROID_ABI}/libncnn.a)
     target_include_directories(ncnn INTERFACE ${NCNN_DIR}/include)
+    
+    # Add OpenMP link flags for NCNN
+    set_target_properties(ncnn PROPERTIES 
+        INTERFACE_LINK_LIBRARIES "-fopenmp;-static-openmp;android;log")
+    
     message(STATUS "Using NCNN from: ${NCNN_DIR}")
     message(STATUS "NCNN library: ${NCNN_DIR}/lib/android/${ANDROID_ABI}/libncnn.a")
     message(STATUS "NCNN headers: ${NCNN_DIR}/include")
@@ -48,4 +56,8 @@ target_link_libraries(yolo_tracker
 if(TARGET ncnn)
     target_link_libraries(yolo_tracker ncnn)
     target_compile_definitions(yolo_tracker PRIVATE USE_NCNN=1)
+    
+    # Add OpenMP compiler flags
+    target_compile_options(yolo_tracker PRIVATE -fopenmp)
+    target_link_options(yolo_tracker PRIVATE -fopenmp -static-openmp)
 endif()
